@@ -7,6 +7,7 @@ export interface CampoBase {
   id: string
   label: string
   tipo: CampoTipo
+  placeholder?: string
 }
 
 export interface CampoTexto extends CampoBase {
