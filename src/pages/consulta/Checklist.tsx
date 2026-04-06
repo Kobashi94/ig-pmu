@@ -385,22 +385,6 @@ export default function Checklist({ tipo, onClienteGuardada }: ChecklistProps) {
 
       <div className="hr-diamond w-48 mx-auto"><div className="diamond" /></div>
 
-      {/* Notas rápidas */}
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-card rounded-lg border border-border p-5 card-elevated">
-          <label className="block text-[10px] font-body font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-2">
-            Notas Rápidas
-          </label>
-          <textarea
-            value={(formState["notas_rapidas"] as string) || ""}
-            onChange={(e) => handleChange("notas_rapidas", e.target.value)}
-            placeholder="Apontamentos rápidos sobre a consulta..."
-            rows={3}
-            className="w-full bg-secondary/50 border border-border rounded-md px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/40 resize-none"
-          />
-        </div>
-      </div>
-
       {/* Associar a cliente existente */}
       <div className="max-w-2xl mx-auto">
         {!guardada && !clienteAssociada && (
@@ -484,12 +468,28 @@ export default function Checklist({ tipo, onClienteGuardada }: ChecklistProps) {
       {/* Secções */}
       <div className="max-w-2xl mx-auto space-y-4">
         {data.seccoes.map((seccao) => (
-          <SecaoCard
-            key={seccao.numero}
-            seccao={seccao}
-            formState={formState}
-            onChange={handleChange}
-          />
+          <div key={seccao.numero}>
+            <SecaoCard
+              seccao={seccao}
+              formState={formState}
+              onChange={handleChange}
+            />
+            {/* Notas rápidas após a secção 1 */}
+            {seccao.numero === "1" && (
+              <div className="bg-card rounded-lg border border-border p-5 card-elevated mt-4">
+                <label className="block text-[10px] font-body font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-2">
+                  Notas Rápidas
+                </label>
+                <textarea
+                  value={(formState["notas_rapidas"] as string) || ""}
+                  onChange={(e) => handleChange("notas_rapidas", e.target.value)}
+                  placeholder="Apontamentos rápidos sobre a consulta..."
+                  rows={3}
+                  className="w-full bg-secondary/50 border border-border rounded-md px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/40 resize-none"
+                />
+              </div>
+            )}
+          </div>
         ))}
 
         {/* Botão guardar cliente */}

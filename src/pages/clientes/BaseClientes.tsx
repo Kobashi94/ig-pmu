@@ -4,6 +4,8 @@ import { supabase } from "@/lib/supabase"
 import type { TipoProcedimento } from "@/pages/menu/MenuPrincipal"
 import type { ChecklistGuardada } from "@/hooks/useClientes"
 import Estudo from "@/pages/consulta/Estudo"
+import { checklists as checklistDefinitions } from "@/data/checklists"
+import type { Campo, SecaoChecklist } from "@/data/checklists"
 
 interface ClienteRow {
   id: string
@@ -551,33 +553,81 @@ export default function BaseClientes({ onVoltar }: BaseClientesProps) {
                   {checklistAberta === cl.id && (
                     <div className="px-5 pb-5 border-t border-border pt-4">
                       {editandoChecklist === cl.id ? (
-                        /* Modo edição */
-                        <div className="space-y-3">
-                          {Object.entries(editDados).map(([key, value]) => {
-                            if (["nome", "contacto", "data_nascimento", "idade", "data"].includes(key)) return null
-                            if (value === false || value === undefined || value === null) return null
-                            const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-
-                            if (typeof value === "boolean") return (
-                              <label key={key} className="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" checked={value} onChange={(e) => setEditDados((prev) => ({ ...prev, [key]: e.target.checked }))} className="accent-accent" />
-                                <span className="text-[11px] font-body text-foreground">{label}</span>
-                              </label>
-                            )
-
-                            return (
-                              <div key={key}>
-                                <label className="block text-[9px] font-body font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-1">{label}</label>
-                                <input
-                                  type="text"
-                                  value={Array.isArray(value) ? value.join(", ") : String(value)}
-                                  onChange={(e) => setEditDados((prev) => ({ ...prev, [key]: e.target.value }))}
-                                  className="w-full bg-secondary/50 border border-border rounded-md px-3 py-2 text-[11px] font-body text-foreground focus:outline-none focus:ring-1 focus:ring-accent/40"
-                                />
-                              </div>
-                            )
-                          })}
-                          <div className="flex gap-2 pt-2">
+                        /* Modo edição — mostra TODOS os campos da checklist original */
+                        <div className="space-y-4">
+                          {(() => {
+                            const checklistDef = checklistDefinitions[cl.tipo_procedimento as keyof typeof checklistDefinitions]
+                            if (!checklistDef) return null
+                            return checklistDef.seccoes.map((seccao: SecaoChecklist) => {
+                              // Filtrar secção de identificação
+                              if (seccao.numero === "1") return null
+                              return (
+                                <div key={seccao.numero}>
+                                  <p className="text-[9px] font-body font-semibold tracking-[0.2em] uppercase text-accent mb-2 mt-3">{seccao.titulo}</p>
+                                  <div className="space-y-2">
+                                    {seccao.campos.map((campo: Campo) => {
+                                      const val = editDados[campo.id]
+                                      if (campo.tipo === "checkbox") return (
+                                        <label key={campo.id} className="flex items-center gap-2 cursor-pointer">
+                                          <input type="checkbox" checked={!!val} onChange={(e) => setEditDados((prev) => ({ ...prev, [campo.id]: e.target.checked }))} className="accent-accent" />
+                                          <span className="text-[11px] font-body text-foreground">{campo.label}</span>
+                                        </label>
+                                      )
+                                      if (campo.tipo === "sim_nao") return (
+                                        <div key={campo.id} className="flex items-center gap-2">
+                                          <span className="text-[10px] font-body text-muted-foreground w-40 shrink-0">{campo.label}</span>
+                                          <div className="flex gap-1">
+                                            {["Sim", "Não"].map((op) => (
+                                              <button key={op} onClick={() => setEditDados((prev) => ({ ...prev, [campo.id]: op }))}
+                                                className={`px-3 py-1 rounded text-[10px] font-body font-semibold border transition-colors ${val === op ? "bg-accent/10 border-accent/30 text-accent" : "border-border text-muted-foreground"}`}>
+                                                {op}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )
+                                      if (campo.tipo === "opcoes") return (
+                                        <div key={campo.id}>
+                                          <span className="text-[10px] font-body text-muted-foreground">{campo.label}</span>
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {campo.opcoes.map((op) => {
+                                              const selected = campo.multiplo ? (Array.isArray(val) && val.includes(op)) : (Array.isArray(val) ? val[0] === op : val === op)
+                                              return (
+                                                <button key={op} onClick={() => {
+                                                  if (campo.multiplo) {
+                                                    const arr = Array.isArray(val) ? val as string[] : []
+                                                    setEditDados((prev) => ({ ...prev, [campo.id]: selected ? arr.filter((v) => v !== op) : [...arr, op] }))
+                                                  } else {
+                                                    setEditDados((prev) => ({ ...prev, [campo.id]: [op] }))
+                                                  }
+                                                }} className={`px-2 py-1 rounded text-[9px] font-body font-semibold border transition-colors ${selected ? "bg-accent/10 border-accent/30 text-accent" : "border-border text-muted-foreground"}`}>
+                                                  {selected && "\u2713 "}{op}
+                                                </button>
+                                              )
+                                            })}
+                                          </div>
+                                        </div>
+                                      )
+                                      // texto, textarea, data_nascimento
+                                      return (
+                                        <div key={campo.id}>
+                                          <label className="block text-[9px] font-body font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-1">{campo.label}</label>
+                                          {campo.tipo === "textarea" ? (
+                                            <textarea value={(val as string) || ""} onChange={(e) => setEditDados((prev) => ({ ...prev, [campo.id]: e.target.value }))} rows={2}
+                                              className="w-full bg-secondary/50 border border-border rounded-md px-3 py-2 text-[11px] font-body text-foreground focus:outline-none focus:ring-1 focus:ring-accent/40 resize-none" />
+                                          ) : (
+                                            <input type="text" value={(val as string) || ""} onChange={(e) => setEditDados((prev) => ({ ...prev, [campo.id]: e.target.value }))} placeholder={campo.placeholder || ""}
+                                              className="w-full bg-secondary/50 border border-border rounded-md px-3 py-2 text-[11px] font-body text-foreground focus:outline-none focus:ring-1 focus:ring-accent/40" />
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )
+                            })
+                          })()}
+                          <div className="flex gap-2 pt-3">
                             <button onClick={guardarEdicao} className="flex-1 h-9 bg-accent text-accent-foreground text-[9px] font-body font-semibold tracking-[0.2em] uppercase rounded-md hover:bg-accent/90 transition-colors flex items-center justify-center gap-1">
                               <Save className="w-3 h-3" strokeWidth={1.5} />Guardar
                             </button>
