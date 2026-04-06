@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { ArrowLeft, Search, ChevronDown, User, Calendar, ClipboardList, Camera, Filter, ArrowUpDown, ScanEye, Trash2 } from "lucide-react"
+import { ArrowLeft, Search, ChevronDown, User, Calendar, ClipboardList, Camera, Filter, ArrowUpDown, ScanEye, Trash2, Pencil, Save } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { TipoProcedimento } from "@/pages/menu/MenuPrincipal"
 import type { ChecklistGuardada } from "@/hooks/useClientes"
@@ -37,6 +37,9 @@ export default function BaseClientes({ onVoltar }: BaseClientesProps) {
   const [dataSessao, setDataSessao] = useState<string | null>(null)
   const [retoques, setRetoques] = useState<{ id: string; data: string }[]>([])
   const [procedimentoId, setProcedimentoId] = useState<string | null>(null)
+  const [editandoChecklist, setEditandoChecklist] = useState<string | null>(null)
+  const [editDados, setEditDados] = useState<Record<string, unknown>>({})
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // Carregar clientes
   const carregar = useCallback(async () => {
@@ -196,6 +199,29 @@ export default function BaseClientes({ onVoltar }: BaseClientesProps) {
   const removerFotoEstudo = async (fotoId: string) => {
     await supabase.from("fotos").delete().eq("id", fotoId)
     setFotosEstudo((prev) => prev.filter((f) => f.id !== fotoId))
+  }
+
+  // Editar checklist
+  const iniciarEdicao = (cl: ChecklistGuardada) => {
+    setEditandoChecklist(cl.id)
+    setEditDados({ ...(cl.dados as Record<string, unknown>) })
+  }
+
+  const guardarEdicao = async () => {
+    if (!editandoChecklist) return
+    await supabase.from("checklists").update({ dados: editDados }).eq("id", editandoChecklist)
+    setChecklists((prev) => prev.map((cl) => cl.id === editandoChecklist ? { ...cl, dados: editDados } : cl))
+    setEditandoChecklist(null)
+    setEditDados({})
+  }
+
+  // Apagar cliente
+  const apagarCliente = async () => {
+    if (!clienteAberto) return
+    await supabase.from("clientes").delete().eq("id", clienteAberto)
+    setClientes((prev) => prev.filter((c) => c.id !== clienteAberto))
+    setClienteAberto(null)
+    setConfirmDelete(false)
   }
 
   const clienteDetalhe = clienteAberto ? clientes.find((c) => c.id === clienteAberto) : null
@@ -523,25 +549,70 @@ export default function BaseClientes({ onVoltar }: BaseClientesProps) {
 
                   {/* Dados da checklist expandidos */}
                   {checklistAberta === cl.id && (
-                    <div className="px-5 pb-5 border-t border-border pt-4 space-y-3">
-                      {Object.entries(cl.dados as Record<string, unknown>).map(([key, value]) => {
-                        // Filtrar campos pessoais (já estão no card de cima)
-                        if (["nome", "contacto", "data_nascimento", "idade", "data"].includes(key)) return null
-                        if (!value || (Array.isArray(value) && value.length === 0)) return null
-                        const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-                        let displayValue: string
-                        if (typeof value === "boolean") displayValue = value ? "Sim" : "Não"
-                        else if (Array.isArray(value)) displayValue = value.join(", ")
-                        else displayValue = String(value)
+                    <div className="px-5 pb-5 border-t border-border pt-4">
+                      {editandoChecklist === cl.id ? (
+                        /* Modo edição */
+                        <div className="space-y-3">
+                          {Object.entries(editDados).map(([key, value]) => {
+                            if (["nome", "contacto", "data_nascimento", "idade", "data"].includes(key)) return null
+                            if (value === false || value === undefined || value === null) return null
+                            const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 
-                        return (
-                          <div key={key} className="flex justify-between items-baseline gap-3">
-                            <span className="text-[10px] font-body text-muted-foreground shrink-0">{label}</span>
-                            <span className="flex-1 border-b border-dotted border-border/60 mx-1 mb-0.5" />
-                            <span className="text-[11px] font-body font-medium text-foreground text-right max-w-[60%]">{displayValue}</span>
+                            if (typeof value === "boolean") return (
+                              <label key={key} className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={value} onChange={(e) => setEditDados((prev) => ({ ...prev, [key]: e.target.checked }))} className="accent-accent" />
+                                <span className="text-[11px] font-body text-foreground">{label}</span>
+                              </label>
+                            )
+
+                            return (
+                              <div key={key}>
+                                <label className="block text-[9px] font-body font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-1">{label}</label>
+                                <input
+                                  type="text"
+                                  value={Array.isArray(value) ? value.join(", ") : String(value)}
+                                  onChange={(e) => setEditDados((prev) => ({ ...prev, [key]: e.target.value }))}
+                                  className="w-full bg-secondary/50 border border-border rounded-md px-3 py-2 text-[11px] font-body text-foreground focus:outline-none focus:ring-1 focus:ring-accent/40"
+                                />
+                              </div>
+                            )
+                          })}
+                          <div className="flex gap-2 pt-2">
+                            <button onClick={guardarEdicao} className="flex-1 h-9 bg-accent text-accent-foreground text-[9px] font-body font-semibold tracking-[0.2em] uppercase rounded-md hover:bg-accent/90 transition-colors flex items-center justify-center gap-1">
+                              <Save className="w-3 h-3" strokeWidth={1.5} />Guardar
+                            </button>
+                            <button onClick={() => setEditandoChecklist(null)} className="px-4 h-9 border border-border rounded-md text-[9px] font-body font-semibold tracking-[0.1em] uppercase text-muted-foreground hover:bg-secondary transition-colors">
+                              Cancelar
+                            </button>
                           </div>
-                        )
-                      })}
+                        </div>
+                      ) : (
+                        /* Modo visualização */
+                        <div className="space-y-3">
+                          {Object.entries(cl.dados as Record<string, unknown>).map(([key, value]) => {
+                            if (["nome", "contacto", "data_nascimento", "idade", "data"].includes(key)) return null
+                            if (!value || (Array.isArray(value) && value.length === 0)) return null
+                            const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+                            let displayValue: string
+                            if (typeof value === "boolean") displayValue = value ? "Sim" : "Não"
+                            else if (Array.isArray(value)) displayValue = value.join(", ")
+                            else displayValue = String(value)
+
+                            return (
+                              <div key={key} className="flex justify-between items-baseline gap-3">
+                                <span className="text-[10px] font-body text-muted-foreground shrink-0">{label}</span>
+                                <span className="flex-1 border-b border-dotted border-border/60 mx-1 mb-0.5" />
+                                <span className="text-[11px] font-body font-medium text-foreground text-right max-w-[60%]">{displayValue}</span>
+                              </div>
+                            )
+                          })}
+                          <div className="pt-2">
+                            <button onClick={() => iniciarEdicao(cl)} className="flex items-center gap-1.5 text-[9px] font-body font-semibold tracking-[0.1em] uppercase text-accent hover:text-accent/80 transition-colors">
+                              <Pencil className="w-3 h-3" strokeWidth={1.5} />Editar checklist
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -599,6 +670,30 @@ export default function BaseClientes({ onVoltar }: BaseClientesProps) {
           {modoEstudo && (
             <div className="fixed inset-0 z-50 bg-background">
               <Estudo tipo={((clientesComServico.get(clienteDetalhe.id) || [])[0] || "labios") as TipoProcedimento} clienteId={clienteDetalhe.id} onFechar={() => { setModoEstudo(false); abrirPerfil(clienteDetalhe.id) }} />
+            </div>
+          )}
+        </div>
+        {/* Apagar cliente */}
+        <div className="pt-4">
+          {!confirmDelete ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1.5 text-[9px] font-body font-medium tracking-[0.1em] uppercase text-muted-foreground/40 hover:text-destructive transition-colors mx-auto"
+            >
+              <Trash2 className="w-3 h-3" strokeWidth={1.5} />
+              Apagar cliente
+            </button>
+          ) : (
+            <div className="bg-destructive/5 border border-destructive/20 rounded-md p-4 text-center max-w-sm mx-auto">
+              <p className="text-[11px] font-body text-foreground mb-3">Tem a certeza? Esta ação é irreversível.</p>
+              <div className="flex gap-2 justify-center">
+                <button onClick={apagarCliente} className="px-4 py-2 bg-destructive text-destructive-foreground text-[9px] font-body font-semibold tracking-[0.15em] uppercase rounded-md hover:bg-destructive/90 transition-colors">
+                  Sim, apagar
+                </button>
+                <button onClick={() => setConfirmDelete(false)} className="px-4 py-2 border border-border rounded-md text-[9px] font-body font-semibold tracking-[0.1em] uppercase text-muted-foreground hover:bg-secondary transition-colors">
+                  Cancelar
+                </button>
+              </div>
             </div>
           )}
         </div>
