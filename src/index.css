@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 12% 96%;
+    --foreground: 0 0% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+
+    --primary: 0 0% 15%;
+    --primary-foreground: 40 10% 96%;
+
+    --secondary: 38 20% 94%;
+    --secondary-foreground: 0 0% 15%;
+
+    --muted: 38 10% 90%;
+    --muted-foreground: 0 0% 48%;
+
+    --accent: 38 58% 52%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 38 45% 92%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 45% 92%;
+    --success-foreground: 152 55% 28%;
+
+    --border: 38 12% 90%;
+    --input: 38 12% 90%;
+    --ring: 38 58% 52%;
+
+    --radius: 0.625rem;
+
+    --header-bg: 0 0% 100%;
+    --header-foreground: 0 0% 15%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  * { @apply border-border; }
+  html { overflow: hidden; height: 100%; -webkit-touch-callout: none; }
+  body { @apply bg-background text-foreground font-body antialiased; overflow: hidden; height: 100%; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
+  #root { height: 100%; overflow: auto; touch-action: none; overscroll-behavior: none; }
+  h1, h2, h3, h4, h5, h6 { @apply font-display; }
+}
+
+/* Páginas com scroll — adicionar esta classe ao container que precisa de scroll */
+.page-scrollable {
+  overflow-y: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* Gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, hsl(35 65% 42%), hsl(40 75% 58%), hsl(44 80% 65%), hsl(40 75% 58%), hsl(35 65% 42%));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Refined card elevations */
+.card-elevated {
+  box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.04), 0 4px 16px -2px hsl(0 0% 0% / 0.04);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card-elevated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px 0 hsl(0 0% 0% / 0.06), 0 16px 48px -8px hsl(38 50% 50% / 0.1);
+}
+
+/* Featured card (gold border glow) */
+.card-featured {
+  box-shadow: 0 0 0 1px hsl(38 58% 52% / 0.25), 0 1px 3px 0 hsl(0 0% 0% / 0.04), 0 8px 32px -4px hsl(38 50% 50% / 0.12);
+}
+.card-featured:hover {
+  box-shadow: 0 0 0 1px hsl(38 58% 52% / 0.4), 0 4px 12px 0 hsl(0 0% 0% / 0.06), 0 20px 56px -8px hsl(38 50% 50% / 0.18);
+}
+
+/* Corner L ornaments (dourado) */
+.corner-ornament { position: relative; }
+.corner-ornament::before,
+.corner-ornament::after {
+  content: ''; position: absolute; width: 20px; height: 20px;
+  border-color: hsl(38 58% 52% / 0.25); pointer-events: none;
+}
+.corner-ornament::before { top: 12px; left: 12px; border-top: 1px solid; border-left: 1px solid; }
+.corner-ornament::after { bottom: 12px; right: 12px; border-bottom: 1px solid; border-right: 1px solid; }
+.corner-ornament-featured::before,
+.corner-ornament-featured::after { border-color: hsl(38 58% 52% / 0.45); width: 24px; height: 24px; }
+
+/* Diamond separator */
+.hr-diamond { display: flex; align-items: center; gap: 12px; }
+.hr-diamond::before,
+.hr-diamond::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, hsl(38 58% 52% / 0.3), transparent); }
+.hr-diamond .diamond { width: 5px; height: 5px; background: hsl(38 58% 52% / 0.4); transform: rotate(45deg); flex-shrink: 0; }
+
+/* Tab navigation */
+.tab-nav-item {
+  position: relative; padding: 0.5rem 0; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase; color: hsl(0 0% 48%);
+  transition: color 0.3s ease; cursor: pointer; background: none; border: none;
+}
+.tab-nav-item:hover { color: hsl(0 0% 15%); }
+.tab-nav-item.active { color: hsl(38 58% 52%); }
+.tab-nav-item.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 2px; background: hsl(38 58% 52%);
+}
