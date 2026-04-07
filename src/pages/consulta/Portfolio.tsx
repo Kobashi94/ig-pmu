@@ -23,7 +23,6 @@ interface PortfolioProps {
 
 const TIPOS_FOTO = [
   { id: "antes" as const, label: "Antes" },
-  { id: "depois" as const, label: "Depois" },
   { id: "pos_imediato" as const, label: "Pós-imediato" },
   { id: "cicatrizado" as const, label: "Cicatrizado" },
 ]
@@ -32,9 +31,9 @@ const TIPOS_FOTO = [
 async function uploadFoto(file: File, portfolioId: string): Promise<string | null> {
   const ext = file.name.split(".").pop() || "jpg"
   const path = `portfolio/${portfolioId}/${Date.now()}.${ext}`
-  const { error } = await supabase.storage.from("fotos").upload(path, file)
+  const { error } = await supabase.storage.from("Fotos").upload(path, file)
   if (error) return null
-  const { data } = supabase.storage.from("fotos").getPublicUrl(path)
+  const { data } = supabase.storage.from("Fotos").getPublicUrl(path)
   return data.publicUrl
 }
 

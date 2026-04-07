@@ -146,14 +146,14 @@ export default function Estudo({ tipo, clienteId, onFechar }: EstudoProps) {
       if (!blob) return
 
       const path = `clientes/${clienteId}/estudo_${Date.now()}.jpg`
-      const { error: uploadError } = await supabase.storage.from("fotos").upload(path, blob)
+      const { error: uploadError } = await supabase.storage.from("Fotos").upload(path, blob)
       if (uploadError) {
         setGuardadoMsg("Erro ao guardar")
         setTimeout(() => setGuardadoMsg(""), 2000)
         return
       }
 
-      const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(path)
+      const { data: urlData } = supabase.storage.from("Fotos").getPublicUrl(path)
 
       await supabase.from("fotos").insert({
         cliente_id: clienteId,
