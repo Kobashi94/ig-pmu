@@ -373,8 +373,9 @@ export default function Portfolio({ tipo }: PortfolioProps) {
                 <p className="text-[11px] font-body text-muted-foreground/60">Sem fotos. Adicione fotos selecionando o tipo e clicando em "Adicionar".</p>
               </div>
             )}
+
+            <input ref={inputAdicionarRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFotoExistente} />
           </div>
-          <input ref={inputAdicionarRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFotoExistente} />
         </div>
       )}
     </div>
